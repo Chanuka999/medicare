@@ -9,10 +9,18 @@ export const protect = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
     }
 
-    if (!token) {
+    if (!token || token === "undefined" || token === "null") {
       return res.status(401).json({
         success: false,
         message: "Not authorized, no token provided",
+      });
+    }
+
+    // Basic JWT shape check before verify (header.payload.signature)
+    if (token.split(".").length !== 3) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized, malformed token",
       });
     }
 
@@ -37,6 +45,13 @@ export const protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized, token failed",
+      });
+    }
+
     console.error("Auth middleware error:", error);
     return res.status(401).json({
       success: false,

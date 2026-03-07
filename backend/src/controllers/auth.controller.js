@@ -11,17 +11,26 @@ export const register = async (req, res) => {
   try {
     const { name, email, password, phone, role, dateOfBirth, gender, address } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    const normalizedEmail = (email || "").trim().toLowerCase();
+
+    if (!normalizedEmail) {
       return res.status(400).json({
         success: false,
-        message: "User already exists with this email",
+        message: "Email is required",
+      });
+    }
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "User already exists with this email. Please login.",
       });
     }
 
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password,
       phone,
       role: role || "patient",
