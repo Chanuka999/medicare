@@ -3,6 +3,11 @@ import { authService } from "../services/api";
 
 const AuthContext = createContext();
 
+const isValidJwtToken = (token) => {
+  if (!token || token === "undefined" || token === "null") return false;
+  return token.split(".").length === 3;
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -12,8 +17,15 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  const initialToken = localStorage.getItem("token");
+  if (initialToken && !isValidJwtToken(initialToken)) {
+    localStorage.removeItem("token");
+  }
+
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [token, setToken] = useState(
+    isValidJwtToken(initialToken) ? initialToken : null,
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   const loadUser = async () => {
     try {
       const response = await authService.getMe();
-      setUser(response.data.user);
+      setUser(response.data?.data?.user || null);
     } catch (error) {
       console.error("Failed to load user:", error);
       logout();
@@ -38,7 +50,11 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await authService.login(email, password);
-    const { user, token } = response.data;
+    const { user, token } = response.data?.data || {};
+
+    if (!user || !token) {
+      throw new Error("Invalid login response from server");
+    }
 
     setUser(user);
     setToken(token);
@@ -49,7 +65,11 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     const response = await authService.register(userData);
-    const { user, token } = response.data;
+    const { user, token } = response.data?.data || {};
+
+    if (!user || !token) {
+      throw new Error("Invalid registration response from server");
+    }
 
     setUser(user);
     setToken(token);

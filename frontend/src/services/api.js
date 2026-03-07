@@ -2,6 +2,11 @@ import axios from "axios";
 
 const API_URL = "/api";
 
+const isValidJwtToken = (token) => {
+  if (!token || token === "undefined" || token === "null") return false;
+  return token.split(".").length === 3;
+};
+
 const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
@@ -13,8 +18,10 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-    if (token) {
+    if (isValidJwtToken(token)) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (token) {
+      localStorage.removeItem("token");
     }
     return config;
   },

@@ -10,6 +10,7 @@ const Register = () => {
     name: "",
     email: "",
     password: "",
+    role: "patient",
     phone: "",
     gender: "",
     dateOfBirth: "",
@@ -96,6 +97,15 @@ const Register = () => {
               required
               placeholder="Enter your phone number"
             />
+          </div>
+
+          <div className="form-group">
+            <label>Role</label>
+            <select name="role" value={formData.role} onChange={handleChange} required>
+              <option value="patient">Patient</option>
+              <option value="doctor">Doctor</option>
+              <option value="admin">Admin</option>
+            </select>
           </div>
 
           <div className="form-group">
