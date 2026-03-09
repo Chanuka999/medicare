@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import User from "./src/models/User.model.js";
 import Doctor from "./src/models/Doctor.model.js";
+import MedicalRecord from "./src/models/MedicalRecord.model.js";
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ const seedData = async () => {
     // Clear existing data (optional - comment out to keep existing data)
     await User.deleteMany({});
     await Doctor.deleteMany({});
+    await MedicalRecord.deleteMany({});
     console.log("Existing data cleared");
 
     // Create Admin User
@@ -143,8 +145,7 @@ const seedData = async () => {
     ]);
     console.log("✓ Doctor profiles created");
 
-    // Create Sample Patients
-    await User.insertMany([
+    const patients = await User.insertMany([
       {
         name: "Saman Kumara",
         email: "saman@test.com",
@@ -169,6 +170,96 @@ const seedData = async () => {
       },
     ]);
     console.log("✓ Sample patients created");
+
+    // Create Sample Medical Records (with linked doctors from Doctor collection)
+    const doctors = await Doctor.find();
+    await MedicalRecord.insertMany([
+      {
+        patientId: patients[0]._id,
+        doctorId: doctors[0]._id,
+        diagnosis: "Hypertension - Controlled",
+        symptoms: ["High blood pressure", "Occasional headaches"],
+        prescription: [
+          {
+            medicineName: "Amlodipine",
+            dosage: "5mg",
+            frequency: "Once daily",
+            duration: "30 days",
+            instructions: "Take in the morning with food",
+          },
+          {
+            medicineName: "Aspirin",
+            dosage: "75mg",
+            frequency: "Once daily",
+            duration: "30 days",
+            instructions: "Take after dinner",
+          },
+        ],
+        vitalSigns: {
+          bloodPressure: "140/90",
+          heartRate: "78 bpm",
+          temperature: "98.6°F",
+          weight: "75 kg",
+        },
+        notes:
+          "Patient advised to monitor blood pressure daily and maintain low-salt diet. Follow-up in 1 month.",
+        followUpDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
+      {
+        patientId: patients[1]._id,
+        doctorId: doctors[1]._id,
+        diagnosis: "Common Cold",
+        symptoms: ["Runny nose", "Sore throat", "Mild fever"],
+        prescription: [
+          {
+            medicineName: "Paracetamol",
+            dosage: "500mg",
+            frequency: "3 times daily",
+            duration: "5 days",
+            instructions: "Take after meals",
+          },
+          {
+            medicineName: "Cetirizine",
+            dosage: "10mg",
+            frequency: "Once daily at night",
+            duration: "5 days",
+            instructions: "Take before sleep",
+          },
+        ],
+        vitalSigns: {
+          temperature: "99.5°F",
+          heartRate: "82 bpm",
+        },
+        notes:
+          "Advised rest and increased fluid intake. Return if symptoms persist beyond 5 days.",
+      },
+      {
+        patientId: patients[0]._id,
+        doctorId: doctors[2]._id,
+        diagnosis: "Annual Health Checkup - Normal",
+        symptoms: [],
+        prescription: [
+          {
+            medicineName: "Vitamin D3",
+            dosage: "1000 IU",
+            frequency: "Once daily",
+            duration: "90 days",
+            instructions: "Take with breakfast",
+          },
+        ],
+        vitalSigns: {
+          bloodPressure: "120/80",
+          heartRate: "72 bpm",
+          temperature: "98.4°F",
+          weight: "74 kg",
+          height: "170 cm",
+        },
+        notes:
+          "All vital parameters normal. Continue healthy lifestyle. Next checkup in 12 months.",
+        followUpDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      },
+    ]);
+    console.log("✓ Sample medical records created");
 
     console.log("\n========================================");
     console.log("✓ Database seeded successfully!");
