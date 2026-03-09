@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import mongoose from "mongoose";
 import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import patientRoutes from "./routes/patient.routes.js";
@@ -16,6 +17,31 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Database connection middleware for serverless
+app.use(async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      const mongoUri = process.env.MONGO_URI;
+      if (!mongoUri) {
+        throw new Error("MONGO_URI not configured");
+      }
+      await mongoose.connect(mongoUri, {
+        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 45000,
+        bufferCommands: false,
+      });
+      console.log("MongoDB connected");
+    }
+    next();
+  } catch (error) {
+    console.error("Database connection error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Database connection failed",
+    });
+  }
+});
 
 // Root route - API welcome message
 app.get("/", (req, res) => {
