@@ -17,6 +17,7 @@ const Register = () => {
     address: "",
   });
   const [error, setError] = useState("");
+  const [userExists, setUserExists] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -29,13 +30,19 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setUserExists(false);
     setLoading(true);
 
     try {
       const user = await register(formData);
       navigate(`/${user.role}`);
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      const errorMessage = err.response?.data?.message || "Registration failed";
+      setError(errorMessage);
+      // Check if it's a duplicate user error (409 Conflict)
+      if (err.response?.status === 409) {
+        setUserExists(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -47,7 +54,21 @@ const Register = () => {
         <h1>MediFlow HMS</h1>
         <h2>Register</h2>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className="error-message">
+            {error}
+            {userExists && (
+              <div style={{ marginTop: "10px" }}>
+                <Link
+                  to="/login"
+                  style={{ color: "#fff", textDecoration: "underline" }}
+                >
+                  Go to Login
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -101,7 +122,12 @@ const Register = () => {
 
           <div className="form-group">
             <label>Role</label>
-            <select name="role" value={formData.role} onChange={handleChange} required>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              required
+            >
               <option value="patient">Patient</option>
               <option value="doctor">Doctor</option>
               <option value="admin">Admin</option>
