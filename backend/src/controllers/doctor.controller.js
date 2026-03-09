@@ -1,6 +1,8 @@
 import Appointment from "../models/Appointment.model.js";
 import MedicalRecord from "../models/MedicalRecord.model.js";
 import Doctor from "../models/Doctor.model.js";
+import Review from "../models/Review.model.js";
+import mongoose from "mongoose";
 
 // Get doctor's appointments
 export const getMyAppointments = async (req, res) => {
@@ -51,7 +53,7 @@ export const updateAppointmentStatus = async (req, res) => {
     const appointment = await Appointment.findByIdAndUpdate(
       id,
       { status },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).populate("patientId", "name email phone");
 
     if (!appointment) {
@@ -113,12 +115,17 @@ export const createMedicalRecord = async (req, res) => {
 
     // Update appointment status to completed if provided
     if (appointmentId) {
-      await Appointment.findByIdAndUpdate(appointmentId, { status: "completed" });
+      await Appointment.findByIdAndUpdate(appointmentId, {
+        status: "completed",
+      });
     }
 
     await medicalRecord.populate([
       { path: "patientId", select: "name email phone" },
-      { path: "doctorId", populate: { path: "userId", select: "name specialization" } },
+      {
+        path: "doctorId",
+        populate: { path: "userId", select: "name specialization" },
+      },
     ]);
 
     res.status(201).json({
@@ -164,7 +171,7 @@ export const getMyProfile = async (req, res) => {
   try {
     const doctor = await Doctor.findOne({ userId: req.user.id }).populate(
       "userId",
-      "name email phone profileImage"
+      "name email phone profileImage",
     );
 
     if (!doctor) {
@@ -174,9 +181,43 @@ export const getMyProfile = async (req, res) => {
       });
     }
 
+    // Calculate total unique patients
+    const uniquePatients = await Appointment.distinct("patientId", {
+      doctorId: doctor._id,
+    });
+    const totalPatients = uniquePatients.length;
+
+    // Calculate average rating from reviews
+    const ratingStats = await Review.aggregate([
+      {
+        $match: { doctorId: new mongoose.Types.ObjectId(req.user.id) },
+      },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const rating =
+      ratingStats.length > 0
+        ? Math.round(ratingStats[0].averageRating * 10) / 10
+        : 0;
+    const totalReviews =
+      ratingStats.length > 0 ? ratingStats[0].totalReviews : 0;
+
     res.status(200).json({
       success: true,
-      data: { doctor },
+      data: {
+        doctor: {
+          ...doctor.toObject(),
+          totalPatients,
+          rating,
+          totalReviews,
+        },
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -194,7 +235,7 @@ export const updateAvailability = async (req, res) => {
     const doctor = await Doctor.findOneAndUpdate(
       { userId: req.user.id },
       { availability },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!doctor) {
