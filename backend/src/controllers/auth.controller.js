@@ -9,7 +9,8 @@ const generateToken = (id) => {
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, phone, role, dateOfBirth, gender, address } = req.body;
+    const { name, email, password, phone, role, dateOfBirth, gender, address } =
+      req.body;
 
     const normalizedEmail = (email || "").trim().toLowerCase();
 
@@ -17,6 +18,13 @@ export const register = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Email is required",
+      });
+    }
+
+    if (!name || !password || !phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, password, and phone are required",
       });
     }
 
@@ -56,9 +64,25 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors,
+      });
+    }
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "User already exists with this email. Please login.",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal server error during registration",
     });
   }
 };
@@ -66,15 +90,18 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = (email || "").trim().toLowerCase();
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({
         success: false,
         message: "Please provide email and password",
       });
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password",
+    );
 
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({
@@ -117,7 +144,7 @@ export const login = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    
+
     res.status(200).json({
       success: true,
       data: { user },
