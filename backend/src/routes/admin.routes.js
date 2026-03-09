@@ -6,6 +6,10 @@ import {
   updateDoctor,
   updateUserStatus,
   getDashboardStats,
+  getDailyAppointments,
+  getMonthlyRevenue,
+  getMostVisitedDoctors,
+  getPatientGrowth,
 } from "../controllers/admin.controller.js";
 import { protect, restrictTo } from "../middleware/auth.middleware.js";
 
@@ -23,5 +27,9 @@ router.get("/doctors", getAllDoctors);
 router.patch("/doctors/:id", updateDoctor);
 
 router.get("/dashboard/stats", getDashboardStats);
+router.get("/statistics/daily-appointments", getDailyAppointments);
+router.get("/statistics/monthly-revenue", getMonthlyRevenue);
+router.get("/statistics/most-visited-doctors", getMostVisitedDoctors);
+router.get("/statistics/patient-growth", getPatientGrowth);
 
 export default router;
