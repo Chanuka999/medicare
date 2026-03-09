@@ -28,6 +28,28 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+// Handle 401 responses globally
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // If we get a 401, clear the invalid token
+    if (error.response?.status === 401) {
+      const token = localStorage.getItem("token");
+      if (token) {
+        localStorage.removeItem("token");
+        // Only reload if we're not already on an auth page
+        if (
+          !window.location.pathname.includes("/login") &&
+          !window.location.pathname.includes("/register")
+        ) {
+          window.location.href = "/login";
+        }
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
 // Auth API
 export const authService = {
   register: (userData) => apiClient.post("/auth/register", userData),

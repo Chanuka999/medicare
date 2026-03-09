@@ -41,7 +41,11 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.getMe();
       setUser(response.data?.data?.user || null);
     } catch (error) {
-      console.error("Failed to load user:", error);
+      // Only log if it's not a 401 (expired/invalid token is expected)
+      if (error.response?.status !== 401) {
+        console.error("Failed to load user:", error);
+      }
+      // Clear invalid/expired token
       logout();
     } finally {
       setLoading(false);
