@@ -1,0 +1,199 @@
+/* Chart Container */
+.chart-container {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.chart-container h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* Charts Grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Doctors Table */
+.doctors-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.doctors-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.doctors-table thead {
+  background: var(--surface-muted);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.doctors-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.doctors-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.doctors-table tbody tr:hover {
+  background: rgba(147, 197, 253, 0.08);
+  transition: background-color 0.2s;
+}
+
+.doctors-table tbody tr.even-row {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.doctors-table strong {
+  color: var(--text-main);
+}
+
+/* Table Badges */
+.badge-count {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.badge-success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Completion Rate Bar */
+.completion-rate-bar {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  background: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.completion-rate-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #6ee7b7);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.rate-text {
+  position: absolute;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-main);
+  z-index: 1;
+}
+
+/* Dark Mode */
+body.theme-dark .chart-container {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+body.theme-dark .chart-container h3 {
+  color: #e5e7eb;
+}
+
+body.theme-dark .doctors-table-wrapper {
+  border-color: #374151;
+}
+
+body.theme-dark .doctors-table thead {
+  background: #374151;
+  border-bottom-color: #4b5563;
+}
+
+body.theme-dark .doctors-table th {
+  color: #e5e7eb;
+}
+
+body.theme-dark .doctors-table td {
+  border-bottom-color: #374151;
+  color: #d1d5db;
+}
+
+body.theme-dark .doctors-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+body.theme-dark .doctors-table tbody tr.even-row {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+body.theme-dark .doctors-table strong {
+  color: #e5e7eb;
+}
+
+body.theme-dark .completion-rate-bar {
+  background: #4b5563;
+}
+
+body.theme-dark .rate-text {
+  color: #e5e7eb;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    padding: 1rem;
+  }
+
+  .doctors-table {
+    font-size: 0.85rem;
+  }
+
+  .doctors-table th,
+  .doctors-table td {
+    padding: 0.5rem;
+  }
+
+  .doctors-table th {
+    font-size: 0.75rem;
+  }
+}

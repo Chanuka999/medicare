@@ -4,14 +4,36 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg-main: #f5f7fa;
+  --text-main: #333;
+  --surface: #ffffff;
+  --surface-muted: #f8f9fa;
+  --border-color: #e5e7eb;
+  --sidebar-grad-a: #667eea;
+  --sidebar-grad-b: #764ba2;
+  --accent: #667eea;
+}
+
 body {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
     "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f7fa;
-  color: #333;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+body.theme-dark {
+  --bg-main: #0b1220;
+  --text-main: #e5e7eb;
+  --surface: #111827;
+  --surface-muted: #1f2937;
+  --border-color: #334155;
+  --sidebar-grad-a: #1e293b;
+  --sidebar-grad-b: #0f172a;
+  --accent: #60a5fa;
 }
 
 code {
@@ -32,4 +54,153 @@ textarea {
 a {
   text-decoration: none;
   color: inherit;
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1000;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-main);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+body.theme-dark .main-content,
+body.theme-dark .table-container,
+body.theme-dark .form-card,
+body.theme-dark .section-card,
+body.theme-dark .profile-card,
+body.theme-dark .record-card,
+body.theme-dark .chart-card,
+body.theme-dark .monthly-bar-track {
+  background: var(--surface);
+  color: var(--text-main);
+}
+
+body.theme-dark .sidebar {
+  background: linear-gradient(
+    180deg,
+    var(--sidebar-grad-a) 0%,
+    var(--sidebar-grad-b) 100%
+  );
+}
+
+body.theme-dark .data-table thead,
+body.theme-dark .record-header,
+body.theme-dark .appointment-item,
+body.theme-dark .chart-track {
+  background: var(--surface-muted);
+}
+
+body.theme-dark .data-table th,
+body.theme-dark .data-table td,
+body.theme-dark .profile-field,
+body.theme-dark .record-header,
+body.theme-dark .form-group input,
+body.theme-dark .form-group select,
+body.theme-dark .form-group textarea,
+body.theme-dark .prescription-row input {
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+body.theme-dark .main-content h1,
+body.theme-dark .main-content h2,
+body.theme-dark .main-content h3,
+body.theme-dark .form-card h3,
+body.theme-dark .profile-field label,
+body.theme-dark .profile-field p,
+body.theme-dark .record-header h3,
+body.theme-dark .appointment-item p,
+body.theme-dark .chart-label-row,
+body.theme-dark .monthly-label,
+body.theme-dark .monthly-value {
+  color: var(--text-main);
+}
+
+body.theme-dark .form-group input,
+body.theme-dark .form-group select,
+body.theme-dark .form-group textarea,
+body.theme-dark .filter-select,
+body.theme-dark .status-select,
+body.theme-dark .prescription-row,
+body.theme-dark .auth-card .form-group input,
+body.theme-dark .auth-card .form-group select,
+body.theme-dark .auth-card .form-group textarea {
+  background: #0f172a;
+}
+
+body.theme-dark .auth-container {
+  background:
+    linear-gradient(120deg, rgba(2, 6, 23, 0.82), rgba(15, 23, 42, 0.8)),
+    url("https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1600&q=80")
+      center/cover no-repeat;
+}
+
+body.theme-dark .auth-card {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+body.theme-dark .auth-card h1,
+body.theme-dark .auth-card h2,
+body.theme-dark .auth-card .form-group label,
+body.theme-dark .auth-card .auth-footer,
+body.theme-dark .auth-card .auth-footer a {
+  color: #e2e8f0;
+}
+
+/* Dark Mode Hover Effects - Light Blue */
+body.theme-dark .nav-link:hover,
+body.theme-dark .nav-link.active {
+  background: rgba(147, 197, 253, 0.2);
+  border-left-color: #93c5fd;
+  color: #dbeafe;
+}
+
+body.theme-dark .btn-logout:hover {
+  background: rgba(147, 197, 253, 0.35);
+  color: #eff6ff;
+}
+
+body.theme-dark .data-table tbody tr:hover {
+  background-color: rgba(147, 197, 253, 0.15);
+}
+
+body.theme-dark .appointment-item:hover {
+  background-color: rgba(147, 197, 253, 0.15);
+}
+
+body.theme-dark .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%);
+}
+
+body.theme-dark .btn-small:hover {
+  background: #60a5fa;
+}
+
+body.theme-dark .btn-danger-small:hover {
+  background: #ef4444;
+}
+
+body.theme-dark .record-card:hover {
+  box-shadow: 0 4px 16px rgba(147, 197, 253, 0.2);
+}
+
+body.theme-dark .stat-card:hover {
+  box-shadow: 0 4px 16px rgba(147, 197, 253, 0.2);
+}
+
+body.theme-dark .theme-toggle:hover {
+  background: rgba(147, 197, 253, 0.2);
+  border-color: #93c5fd;
 }
