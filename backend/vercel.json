@@ -2,7 +2,7 @@
   "version": 2,
   "buildCommand": "npm install",
   "functions": {
-    "src/server.js": {
+    "src/vercel.js": {
       "memory": 1024,
       "maxDuration": 60
     }
@@ -10,7 +10,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/src/server.js",
+      "dest": "/src/vercel.js",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -19,7 +19,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/src/server.js"
+      "dest": "/src/vercel.js"
     }
   ]
 }
