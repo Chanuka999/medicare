@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import User from "./src/models/User.model.js";
 import Doctor from "./src/models/Doctor.model.js";
 import MedicalRecord from "./src/models/MedicalRecord.model.js";
+import Review from "./src/models/Review.model.js";
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ const seedData = async () => {
     await User.deleteMany({});
     await Doctor.deleteMany({});
     await MedicalRecord.deleteMany({});
+    await Review.deleteMany({});
     console.log("Existing data cleared");
 
     // Create Admin User
@@ -260,6 +262,39 @@ const seedData = async () => {
       },
     ]);
     console.log("✓ Sample medical records created");
+
+    // Create Sample Reviews
+    await Review.insertMany([
+      {
+        doctorId: doctors[0].userId,
+        patientId: patients[0]._id,
+        rating: 5,
+        comment:
+          "Dr. Nimal is an excellent cardiologist. Very thorough in examination and explains everything clearly. Highly recommend!",
+      },
+      {
+        doctorId: doctors[0].userId,
+        patientId: patients[1]._id,
+        rating: 4,
+        comment:
+          "Good doctor with lots of experience. Wait time was a bit long but the consultation was worth it.",
+      },
+      {
+        doctorId: doctors[1].userId,
+        patientId: patients[0]._id,
+        rating: 5,
+        comment:
+          "Dr. Kamani is wonderful with children. My daughter felt very comfortable during the visit. Excellent pediatrician!",
+      },
+      {
+        doctorId: doctors[2].userId,
+        patientId: patients[1]._id,
+        rating: 5,
+        comment:
+          "Very professional and skilled surgeon. Took time to explain the procedure and answered all my questions. Highly satisfied!",
+      },
+    ]);
+    console.log("✓ Sample reviews created");
 
     console.log("\n========================================");
     console.log("✓ Database seeded successfully!");
