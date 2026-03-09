@@ -1,11 +1,6 @@
 {
   "version": 2,
   "buildCommand": "npm install",
-  "env": {
-    "MONGO_URI": "@mongodb_uri",
-    "JWT_SECRET": "@jwt_secret",
-    "NODE_ENV": "production"
-  },
   "functions": {
     "src/server.js": {
       "memory": 1024,
