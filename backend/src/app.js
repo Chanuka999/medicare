@@ -17,6 +17,27 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Root route - API welcome message
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "MediFlow Hospital Management System API",
+    version: "1.0.0",
+    status: "running",
+    endpoints: {
+      health: "/api/health",
+      auth: "/api/auth",
+      admin: "/api/admin",
+      patient: "/api/patient",
+      doctor: "/api/doctor",
+      billing: "/api/billing",
+      reviews: "/api/reviews",
+      notifications: "/api/notifications",
+    },
+    documentation: "See API_DOCUMENTATION.md for details",
+  });
+});
+
 app.get("/api/health", (req, res) => {
   res.status(200).json({ message: "MediFlow HMS API running" });
 });
