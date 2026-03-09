@@ -79,10 +79,60 @@ const AdminDashboard = () => {
 };
 
 const HomeStats = ({ stats }) => {
+  const userRoleData = [
+    {
+      label: "Admins",
+      value: stats?.userRoleCounts?.admin || 0,
+      className: "admin",
+    },
+    {
+      label: "Doctors",
+      value: stats?.userRoleCounts?.doctor || 0,
+      className: "doctor",
+    },
+    {
+      label: "Patients",
+      value: stats?.userRoleCounts?.patient || 0,
+      className: "patient",
+    },
+  ];
+
+  const appointmentStatusData = [
+    {
+      label: "Scheduled",
+      value: stats?.appointmentStatusCounts?.scheduled || 0,
+      className: "scheduled",
+    },
+    {
+      label: "Completed",
+      value: stats?.appointmentStatusCounts?.completed || 0,
+      className: "completed",
+    },
+    {
+      label: "Cancelled",
+      value: stats?.appointmentStatusCounts?.cancelled || 0,
+      className: "cancelled",
+    },
+    {
+      label: "No Show",
+      value: stats?.appointmentStatusCounts?.noShow || 0,
+      className: "noshow",
+    },
+  ];
+
+  const maxMonthlyAppointments = Math.max(
+    1,
+    ...(stats?.monthlyAppointments?.map((item) => item.count) || [0]),
+  );
+
   return (
     <div>
       <h1>Admin Dashboard</h1>
       <div className="stats-grid">
+        <div className="stat-card">
+          <h3>Total Users</h3>
+          <p className="stat-number">{stats?.totalUsers || 0}</p>
+        </div>
         <div className="stat-card">
           <h3>Total Patients</h3>
           <p className="stat-number">{stats?.totalPatients || 0}</p>
@@ -92,8 +142,93 @@ const HomeStats = ({ stats }) => {
           <p className="stat-number">{stats?.totalDoctors || 0}</p>
         </div>
         <div className="stat-card">
+          <h3>Total Admins</h3>
+          <p className="stat-number">{stats?.totalAdmins || 0}</p>
+        </div>
+        <div className="stat-card">
           <h3>Active Users</h3>
           <p className="stat-number">{stats?.activeUsers || 0}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Total Appointments</h3>
+          <p className="stat-number">{stats?.totalAppointments || 0}</p>
+        </div>
+      </div>
+
+      <div className="charts-grid">
+        <div className="chart-card">
+          <h3>User Distribution by Role</h3>
+          {userRoleData.map((item) => {
+            const total = stats?.totalUsers || 1;
+            const percent = Math.round((item.value / total) * 100);
+            return (
+              <div key={item.label} className="chart-row">
+                <div className="chart-label-row">
+                  <span>{item.label}</span>
+                  <span>
+                    {item.value} ({percent}%)
+                  </span>
+                </div>
+                <div className="chart-track">
+                  <div
+                    className={`chart-fill ${item.className}`}
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="chart-card">
+          <h3>Appointments by Status</h3>
+          {appointmentStatusData.map((item) => {
+            const total = stats?.totalAppointments || 1;
+            const percent = Math.round((item.value / total) * 100);
+            return (
+              <div key={item.label} className="chart-row">
+                <div className="chart-label-row">
+                  <span>{item.label}</span>
+                  <span>
+                    {item.value} ({percent}%)
+                  </span>
+                </div>
+                <div className="chart-track">
+                  <div
+                    className={`chart-fill ${item.className}`}
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="chart-card monthly-chart-card">
+        <h3>Appointments Trend (Last 6 Months)</h3>
+        <div className="monthly-bars">
+          {(stats?.monthlyAppointments || []).map((item) => {
+            const height = Math.max(
+              8,
+              Math.round((item.count / maxMonthlyAppointments) * 100),
+            );
+            return (
+              <div
+                key={`${item.month}-${item.year}`}
+                className="monthly-bar-item"
+              >
+                <div className="monthly-value">{item.count}</div>
+                <div className="monthly-bar-track">
+                  <div
+                    className="monthly-bar-fill"
+                    style={{ height: `${height}%` }}
+                  />
+                </div>
+                <div className="monthly-label">{item.month}</div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
