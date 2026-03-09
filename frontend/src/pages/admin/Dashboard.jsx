@@ -2,6 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { adminService } from "../../services/api";
+import Notifications from "../../components/Notifications";
+import DailyAppointmentsChart from "../../components/charts/DailyAppointmentsChart";
+import MonthlyRevenueChart from "../../components/charts/MonthlyRevenueChart";
+import MostVisitedDoctorsChart from "../../components/charts/MostVisitedDoctorsChart";
+import PatientGrowthChart from "../../components/charts/PatientGrowthChart";
+import "../../components/charts/Charts.css";
 import "../../styles/Dashboard.css";
 
 const AdminDashboard = () => {
@@ -60,6 +66,10 @@ const AdminDashboard = () => {
       </aside>
 
       <main className="main-content">
+        <div className="main-header">
+          <div></div>
+          <Notifications />
+        </div>
         <Routes>
           <Route path="/" element={<HomeStats stats={stats} />} />
           <Route path="/doctors" element={<DoctorsManagement />} />
@@ -129,27 +139,27 @@ const HomeStats = ({ stats }) => {
     <div>
       <h1>Admin Dashboard</h1>
       <div className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card stat-card-purple">
           <h3>Total Users</h3>
           <p className="stat-number">{stats?.totalUsers || 0}</p>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card-blue">
           <h3>Total Patients</h3>
           <p className="stat-number">{stats?.totalPatients || 0}</p>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card-green">
           <h3>Total Doctors</h3>
           <p className="stat-number">{stats?.totalDoctors || 0}</p>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card-orange">
           <h3>Total Admins</h3>
           <p className="stat-number">{stats?.totalAdmins || 0}</p>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card-teal">
           <h3>Active Users</h3>
           <p className="stat-number">{stats?.activeUsers || 0}</p>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card-pink">
           <h3>Total Appointments</h3>
           <p className="stat-number">{stats?.totalAppointments || 0}</p>
         </div>
@@ -230,6 +240,25 @@ const HomeStats = ({ stats }) => {
             );
           })}
         </div>
+      </div>
+
+      {/* Advanced Statistics Charts */}
+      <div style={{ marginTop: "3rem" }}>
+        <h2
+          style={{
+            fontSize: "1.5rem",
+            marginBottom: "2rem",
+            color: "var(--text-main)",
+          }}
+        >
+          Advanced Analytics
+        </h2>
+        <div className="charts-grid">
+          <DailyAppointmentsChart />
+          <MonthlyRevenueChart />
+        </div>
+        <PatientGrowthChart />
+        <MostVisitedDoctorsChart />
       </div>
     </div>
   );

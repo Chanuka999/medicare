@@ -67,6 +67,14 @@ export const adminService = {
   getDoctors: () => apiClient.get("/admin/doctors"),
   updateDoctor: (id, data) => apiClient.patch(`/admin/doctors/${id}`, data),
   getDashboardStats: () => apiClient.get("/admin/dashboard/stats"),
+  getDailyAppointments: () =>
+    apiClient.get("/admin/statistics/daily-appointments"),
+  getMonthlyRevenue: () => apiClient.get("/admin/statistics/monthly-revenue"),
+  getMostVisitedDoctors: (limit = 10) =>
+    apiClient.get("/admin/statistics/most-visited-doctors", {
+      params: { limit },
+    }),
+  getPatientGrowth: () => apiClient.get("/admin/statistics/patient-growth"),
 };
 
 // Patient API
@@ -105,6 +113,28 @@ export const billingService = {
   getBill: (id) => apiClient.get(`/billing/${id}`),
   updatePayment: (id, paymentData) =>
     apiClient.patch(`/billing/${id}/payment`, paymentData),
+};
+
+// Review API
+export const reviewService = {
+  createReview: (reviewData) => apiClient.post("/reviews", reviewData),
+  getDoctorReviews: (doctorId) => apiClient.get(`/reviews/doctor/${doctorId}`),
+  getDoctorRatingStats: (doctorId) =>
+    apiClient.get(`/reviews/doctor/${doctorId}/stats`),
+  checkPatientReview: (doctorId) => apiClient.get(`/reviews/check/${doctorId}`),
+  updateReview: (id, reviewData) =>
+    apiClient.patch(`/reviews/${id}`, reviewData),
+  deleteReview: (id) => apiClient.delete(`/reviews/${id}`),
+};
+
+export const notificationService = {
+  getNotifications: (status) =>
+    apiClient.get("/notifications", { params: { status } }),
+  getUnreadCount: () => apiClient.get("/notifications/unread-count"),
+  markAsRead: (id) => apiClient.put(`/notifications/${id}/read`),
+  markAllAsRead: () => apiClient.put("/notifications/mark-all-read"),
+  deleteNotification: (id) => apiClient.delete(`/notifications/${id}`),
+  clearAllNotifications: () => apiClient.delete("/notifications"),
 };
 
 export default apiClient;

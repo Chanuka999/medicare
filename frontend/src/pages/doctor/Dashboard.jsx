@@ -3,6 +3,7 @@ import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import { useAuth } from "../../context/AuthContext";
 import { doctorService } from "../../services/api";
+import Notifications from "../../components/Notifications";
 import "../../styles/Dashboard.css";
 
 const DoctorDashboard = () => {
@@ -61,6 +62,10 @@ const DoctorDashboard = () => {
       </aside>
 
       <main className="main-content">
+        <div className="main-header">
+          <div></div>
+          <Notifications />
+        </div>
         <Routes>
           <Route path="/" element={<HomeOverview profile={profile} />} />
           <Route path="/appointments" element={<AppointmentsList />} />
@@ -100,15 +105,15 @@ const HomeOverview = ({ profile }) => {
     <div>
       <h1>Doctor Dashboard</h1>
       <div className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card stat-card-blue">
           <h3>Today's Appointments</h3>
           <p className="stat-number">{appointments.length}</p>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card-green">
           <h3>Total Patients</h3>
           <p className="stat-number">{profile?.totalPatients || 0}</p>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card-orange">
           <h3>Rating</h3>
           <p className="stat-number">{profile?.rating?.toFixed(1) || "N/A"}</p>
         </div>

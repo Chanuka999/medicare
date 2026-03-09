@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { patientService, billingService } from "../../services/api";
+import {
+  patientService,
+  billingService,
+  reviewService,
+} from "../../services/api";
+import StarRating from "../../components/StarRating";
+import Notifications from "../../components/Notifications";
 import "../../styles/Dashboard.css";
 
 const PatientDashboard = () => {
@@ -36,6 +42,9 @@ const PatientDashboard = () => {
           <Link to="/patient/bills" className="nav-link">
             My Bills
           </Link>
+          <Link to="/patient/review-doctors" className="nav-link">
+            Review Doctors
+          </Link>
         </nav>
         <div className="sidebar-footer">
           <p>{user?.name}</p>
@@ -46,12 +55,17 @@ const PatientDashboard = () => {
       </aside>
 
       <main className="main-content">
+        <div className="main-header">
+          <div></div>
+          <Notifications />
+        </div>
         <Routes>
           <Route path="/" element={<HomeOverview />} />
           <Route path="/book-appointment" element={<BookAppointment />} />
           <Route path="/appointments" element={<AppointmentsList />} />
           <Route path="/medical-records" element={<MedicalRecords />} />
           <Route path="/bills" element={<BillsList />} />
+          <Route path="/review-doctors" element={<DoctorReviews />} />
         </Routes>
       </main>
     </div>
@@ -116,6 +130,7 @@ const HomeOverview = () => {
 
 const BookAppointment = () => {
   const [doctors, setDoctors] = useState([]);
+  const [doctorRatings, setDoctorRatings] = useState({});
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [formData, setFormData] = useState({
     appointmentDate: "",
@@ -135,7 +150,24 @@ const BookAppointment = () => {
   const loadDoctors = async () => {
     try {
       const response = await patientService.getDoctors();
-      setDoctors(response.data.data.doctors);
+      const doctorsList = response.data.data.doctors;
+      setDoctors(doctorsList);
+
+      // Load ratings for each doctor
+      const ratings = {};
+      await Promise.all(
+        doctorsList.map(async (doctor) => {
+          try {
+            const ratingRes = await reviewService.getDoctorRatingStats(
+              doctor._id,
+            );
+            ratings[doctor._id] = ratingRes.data;
+          } catch (err) {
+            ratings[doctor._id] = { averageRating: 0, totalReviews: 0 };
+          }
+        }),
+      );
+      setDoctorRatings(ratings);
     } catch (error) {
       console.error("Failed to load doctors:", error);
     }
@@ -181,95 +213,122 @@ const BookAppointment = () => {
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
 
-      <div className="form-card">
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Select Doctor</label>
-            <select
-              value={selectedDoctor}
-              onChange={(e) => setSelectedDoctor(e.target.value)}
-              required
-            >
-              <option value="">Choose a doctor</option>
-              {doctors.map((doctor) => (
-                <option key={doctor._id} value={doctor._id}>
-                  Dr. {doctor.userId?.name} - {doctor.specialization} (Rs.{" "}
-                  {doctor.consultationFee})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Appointment Date</label>
-            <input
-              type="date"
-              value={formData.appointmentDate}
-              onChange={(e) =>
-                setFormData({ ...formData, appointmentDate: e.target.value })
-              }
-              min={new Date().toISOString().split("T")[0]}
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Start Time</label>
-              <input
-                type="time"
-                value={formData.startTime}
-                onChange={(e) =>
-                  setFormData({ ...formData, startTime: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>End Time</label>
-              <input
-                type="time"
-                value={formData.endTime}
-                onChange={(e) =>
-                  setFormData({ ...formData, endTime: e.target.value })
-                }
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Priority</label>
-            <select
-              value={formData.priority}
-              onChange={(e) =>
-                setFormData({ ...formData, priority: e.target.value })
-              }
-            >
-              <option value="normal">Normal</option>
-              <option value="urgent">Urgent</option>
-              <option value="emergency">Emergency</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Reason for Visit</label>
-            <textarea
-              value={formData.reason}
-              onChange={(e) =>
-                setFormData({ ...formData, reason: e.target.value })
-              }
-              rows="4"
-              required
-              placeholder="Describe your symptoms or reason for consultation"
-            />
-          </div>
-
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Booking..." : "Book Appointment"}
-          </button>
-        </form>
+      <div className="section-card">
+        <h3>Select a Doctor</h3>
+        <div className="doctors-grid">
+          {doctors.map((doctor) => {
+            const rating = doctorRatings[doctor._id] || {
+              averageRating: 0,
+              totalReviews: 0,
+            };
+            return (
+              <div
+                key={doctor._id}
+                className={`doctor-card ${selectedDoctor === doctor._id ? "selected" : ""}`}
+                onClick={() => setSelectedDoctor(doctor._id)}
+              >
+                <div className="doctor-card-header">
+                  <h4>Dr. {doctor.userId?.name}</h4>
+                  <span className="doctor-specialization">
+                    {doctor.specialization}
+                  </span>
+                </div>
+                <div className="doctor-rating">
+                  <StarRating
+                    rating={rating.averageRating}
+                    readonly
+                    size={16}
+                  />
+                  <span className="review-count-small">
+                    ({rating.totalReviews}{" "}
+                    {rating.totalReviews === 1 ? "review" : "reviews"})
+                  </span>
+                </div>
+                <div className="doctor-fee">
+                  <strong>Consultation Fee:</strong> Rs.{" "}
+                  {doctor.consultationFee}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
+
+      {selectedDoctor && (
+        <div className="form-card">
+          <h3>Appointment Details</h3>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Appointment Date</label>
+              <input
+                type="date"
+                value={formData.appointmentDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, appointmentDate: e.target.value })
+                }
+                min={new Date().toISOString().split("T")[0]}
+                required
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Start Time</label>
+                <input
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startTime: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>End Time</label>
+                <input
+                  type="time"
+                  value={formData.endTime}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endTime: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Priority</label>
+              <select
+                value={formData.priority}
+                onChange={(e) =>
+                  setFormData({ ...formData, priority: e.target.value })
+                }
+              >
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+                <option value="emergency">Emergency</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Reason for Visit</label>
+              <textarea
+                value={formData.reason}
+                onChange={(e) =>
+                  setFormData({ ...formData, reason: e.target.value })
+                }
+                rows="4"
+                required
+                placeholder="Describe your symptoms or reason for consultation"
+              />
+            </div>
+
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? "Booking..." : "Book Appointment"}
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
@@ -351,6 +410,8 @@ const AppointmentsList = () => {
 
 const MedicalRecords = () => {
   const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadRecords();
@@ -358,18 +419,32 @@ const MedicalRecords = () => {
 
   const loadRecords = async () => {
     try {
+      setLoading(true);
+      setError("");
       const response = await patientService.getMyMedicalRecords();
-      setRecords(response.data.data.records);
+      setRecords(response.data?.data?.records || []);
     } catch (error) {
       console.error("Failed to load records:", error);
+      setError(
+        error.response?.data?.message || "Failed to load medical records",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div>
       <h1>My Medical Records</h1>
-      {records.length === 0 ? (
-        <p>No medical records yet.</p>
+      {loading ? (
+        <p>Loading medical records...</p>
+      ) : error ? (
+        <div className="error-message">{error}</div>
+      ) : records.length === 0 ? (
+        <p>
+          No medical records yet. Records appear after a doctor creates a
+          prescription or medical note for your account.
+        </p>
       ) : (
         <div className="records-list">
           {records.map((record) => (
@@ -466,6 +541,294 @@ const BillsList = () => {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+};
+
+const DoctorReviews = () => {
+  const [doctors, setDoctors] = useState([]);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [ratingStats, setRatingStats] = useState(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 0,
+    comment: "",
+  });
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [existingReview, setExistingReview] = useState(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadDoctors();
+  }, []);
+
+  useEffect(() => {
+    if (selectedDoctor) {
+      loadDoctorReviews(selectedDoctor);
+      loadRatingStats(selectedDoctor);
+      checkIfReviewed(selectedDoctor);
+    }
+  }, [selectedDoctor]);
+
+  const loadDoctors = async () => {
+    try {
+      const response = await patientService.getDoctors();
+      setDoctors(response.data.data.doctors);
+    } catch (error) {
+      console.error("Failed to load doctors:", error);
+    }
+  };
+
+  const loadDoctorReviews = async (doctorId) => {
+    try {
+      const response = await reviewService.getDoctorReviews(doctorId);
+      setReviews(response.data);
+    } catch (error) {
+      console.error("Failed to load reviews:", error);
+    }
+  };
+
+  const loadRatingStats = async (doctorId) => {
+    try {
+      const response = await reviewService.getDoctorRatingStats(doctorId);
+      setRatingStats(response.data);
+    } catch (error) {
+      console.error("Failed to load rating stats:", error);
+    }
+  };
+
+  const checkIfReviewed = async (doctorId) => {
+    try {
+      const response = await reviewService.checkPatientReview(doctorId);
+      setHasReviewed(response.data.hasReviewed);
+      setExistingReview(response.data.review);
+      if (response.data.review) {
+        setReviewForm({
+          rating: response.data.review.rating,
+          comment: response.data.review.comment,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to check review:", error);
+    }
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    if (reviewForm.rating === 0) {
+      setError("Please select a rating");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (hasReviewed && existingReview) {
+        await reviewService.updateReview(existingReview._id, reviewForm);
+        setSuccess("Review updated successfully!");
+      } else {
+        await reviewService.createReview({
+          doctorId: selectedDoctor,
+          ...reviewForm,
+        });
+        setSuccess("Review submitted successfully!");
+      }
+      setShowReviewForm(false);
+      loadDoctorReviews(selectedDoctor);
+      loadRatingStats(selectedDoctor);
+      checkIfReviewed(selectedDoctor);
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to submit review");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!window.confirm("Are you sure you want to delete your review?")) return;
+
+    try {
+      await reviewService.deleteReview(existingReview._id);
+      setSuccess("Review deleted successfully!");
+      setHasReviewed(false);
+      setExistingReview(null);
+      setReviewForm({ rating: 0, comment: "" });
+      loadDoctorReviews(selectedDoctor);
+      loadRatingStats(selectedDoctor);
+    } catch (error) {
+      setError("Failed to delete review");
+    }
+  };
+
+  return (
+    <div>
+      <h1>Review Doctors</h1>
+
+      {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
+
+      <div className="form-card">
+        <div className="form-group">
+          <label>Select Doctor</label>
+          <select
+            value={selectedDoctor || ""}
+            onChange={(e) => setSelectedDoctor(e.target.value)}
+          >
+            <option value="">Choose a doctor</option>
+            {doctors.map((doctor) => (
+              <option key={doctor._id} value={doctor._id}>
+                Dr. {doctor.userId?.name} - {doctor.specialization}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {selectedDoctor && ratingStats && (
+        <div className="section-card">
+          <h2>Doctor Rating Overview</h2>
+          <div className="rating-overview">
+            <div className="rating-summary">
+              <div className="average-rating-large">
+                {ratingStats.averageRating.toFixed(1)}
+              </div>
+              <StarRating
+                rating={ratingStats.averageRating}
+                readonly
+                size={24}
+              />
+              <p className="rating-count">
+                Based on {ratingStats.totalReviews} review
+                {ratingStats.totalReviews !== 1 ? "s" : ""}
+              </p>
+            </div>
+            <div className="rating-distribution">
+              {[5, 4, 3, 2, 1].map((star) => (
+                <div key={star} className="rating-bar-row">
+                  <span className="star-label">{star} ★</span>
+                  <div className="rating-bar-track">
+                    <div
+                      className="rating-bar-fill"
+                      style={{
+                        width: `${ratingStats.totalReviews > 0 ? (ratingStats.ratingDistribution[star] / ratingStats.totalReviews) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="rating-bar-count">
+                    {ratingStats.ratingDistribution[star]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {!showReviewForm && (
+            <div style={{ marginTop: "1.5rem" }}>
+              {hasReviewed ? (
+                <div>
+                  <button
+                    onClick={() => setShowReviewForm(true)}
+                    className="btn-primary"
+                    style={{ marginRight: "0.5rem" }}
+                  >
+                    Edit Your Review
+                  </button>
+                  <button
+                    onClick={handleDeleteReview}
+                    className="btn-danger-small"
+                  >
+                    Delete Review
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowReviewForm(true)}
+                  className="btn-primary"
+                >
+                  Write a Review
+                </button>
+              )}
+            </div>
+          )}
+
+          {showReviewForm && (
+            <form onSubmit={handleSubmitReview} className="review-form">
+              <h3>{hasReviewed ? "Edit Your Review" : "Write a Review"}</h3>
+              <div className="form-group">
+                <label>Rating</label>
+                <StarRating
+                  rating={reviewForm.rating}
+                  onRatingChange={(rating) =>
+                    setReviewForm({ ...reviewForm, rating })
+                  }
+                  size={32}
+                />
+              </div>
+              <div className="form-group">
+                <label>Comment</label>
+                <textarea
+                  value={reviewForm.comment}
+                  onChange={(e) =>
+                    setReviewForm({ ...reviewForm, comment: e.target.value })
+                  }
+                  rows="4"
+                  required
+                  maxLength="500"
+                  placeholder="Share your experience with this doctor..."
+                />
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={loading}
+                >
+                  {loading
+                    ? "Submitting..."
+                    : hasReviewed
+                      ? "Update Review"
+                      : "Submit Review"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowReviewForm(false)}
+                  className="btn-small"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
+      {selectedDoctor && reviews.length > 0 && (
+        <div className="section-card">
+          <h2>Patient Reviews</h2>
+          <div className="reviews-list">
+            {reviews.map((review) => (
+              <div key={review._id} className="review-item">
+                <div className="review-header">
+                  <div>
+                    <strong>{review.patientId?.name || "Anonymous"}</strong>
+                    <StarRating rating={review.rating} readonly size={16} />
+                  </div>
+                  <span className="review-date">
+                    {new Date(review.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="review-comment">{review.comment}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
