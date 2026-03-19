@@ -1,132 +1,300 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, Link, useNavigate } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   patientService,
   billingService,
   reviewService,
 } from "../../services/api";
+import {
+  FiGrid, FiUser, FiCalendar, FiList, FiFileText, FiDollarSign, FiStar, FiSearch, FiBell, FiChevronDown, FiActivity, FiLogOut
+} from "react-icons/fi";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Cell, PieChart, Pie, RadialBarChart, RadialBar, Legend
+} from "recharts";
 import StarRating from "../../components/StarRating";
 import Notifications from "../../components/Notifications";
-import "../../styles/Dashboard.css";
+import "./DashboardDesign.css";
 
 const PatientDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  const menuItems = [
+    { name: "Dashboard", path: "/patient", icon: <FiGrid /> },
+    { name: "Profile", path: "/patient/profile", icon: <FiUser /> },
+    { name: "Book Appointment", path: "/patient/book-appointment", icon: <FiCalendar /> },
+    { name: "My Appointments", path: "/patient/appointments", icon: <FiList /> },
+    { name: "Medical Records", path: "/patient/medical-records", icon: <FiFileText /> },
+    { name: "My Bills", path: "/patient/bills", icon: <FiDollarSign /> },
+    { name: "Review Doctors", path: "/patient/review-doctors", icon: <FiStar /> },
+  ];
+
+  const isActive = (path) => {
+      if (path === "/patient") return location.pathname === "/patient";
+      return location.pathname.startsWith(path);
+  };
+
   return (
-    <div className="dashboard-container">
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <h2>MediFlow HMS</h2>
-          <p className="user-badge">Patient</p>
+    <div className="p-dashboard-container">
+      {/* Sidebar */}
+      <aside className="p-sidebar">
+        <div className="p-sidebar-logo" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
+          <div className="logo-box">C</div>
+          <span>CarePoint</span>
         </div>
-        <nav className="sidebar-nav">
-          <Link to="/patient" className="nav-link">
-            Dashboard
-          </Link>
-          <Link to="/patient/book-appointment" className="nav-link">
-            Book Appointment
-          </Link>
-          <Link to="/patient/appointments" className="nav-link">
-            My Appointments
-          </Link>
-          <Link to="/patient/medical-records" className="nav-link">
-            Medical Records
-          </Link>
-          <Link to="/patient/bills" className="nav-link">
-            My Bills
-          </Link>
-          <Link to="/patient/review-doctors" className="nav-link">
-            Review Doctors
-          </Link>
+        
+        <nav className="p-sidebar-nav">
+          {menuItems.map((item) => (
+            <Link 
+              key={item.path} 
+              to={item.path} 
+              className={`p-nav-link ${isActive(item.path) ? 'active' : ''}`}
+            >
+              <span className="p-nav-icon">{item.icon}</span>
+              <span>{item.name}</span>
+            </Link>
+          ))}
         </nav>
-        <div className="sidebar-footer">
-          <p>{user?.name}</p>
-          <button onClick={handleLogout} className="btn-logout">
-            Logout
+
+        <div className="p-sidebar-footer">
+          <div className="p-user-summary">
+            <img src={`https://ui-avatars.com/api/?name=${user?.name || "User"}&background=0f766e&color=fff`} alt="user" />
+            <div className="p-user-info">
+              <span>{user?.name}</span>
+              <p>Patient Account</p>
+            </div>
+          </div>
+          <button onClick={handleLogout} className="logout-btn-p">
+             <FiLogOut /> <span>Logout</span>
           </button>
         </div>
       </aside>
 
-      <main className="main-content">
-        <div className="main-header">
-          <div></div>
-          <Notifications />
+      {/* Main Content */}
+      <main className="p-main-content">
+        <header className="p-top-header">
+           <div className="p-search-wrapper">
+              <FiSearch className="p-search-icon" />
+              <input type="text" placeholder="Search for medical reports, doctors..." />
+           </div>
+           
+           <div className="p-top-actions">
+              <Notifications />
+              <div className="p-prof-notif">
+                 <span>Hi, {user?.name?.split(' ')[0]}</span>
+                 <img src={`https://ui-avatars.com/api/?name=${user?.name || "User"}&background=e2e8f0&color=475569`} alt="avatar" />
+                 <FiChevronDown />
+              </div>
+           </div>
+        </header>
+
+        <div className="p-content-router">
+          <Routes>
+            <Route path="/" element={<HomeOverview user={user} />} />
+            <Route path="/book-appointment" element={<BookAppointment />} />
+            <Route path="/appointments" element={<AppointmentsList />} />
+            <Route path="/medical-records" element={<MedicalRecords />} />
+            <Route path="/bills" element={<BillsList />} />
+            <Route path="/review-doctors" element={<DoctorReviews />} />
+            <Route path="/profile" element={<ProfileOverview user={user} />} />
+          </Routes>
         </div>
-        <Routes>
-          <Route path="/" element={<HomeOverview />} />
-          <Route path="/book-appointment" element={<BookAppointment />} />
-          <Route path="/appointments" element={<AppointmentsList />} />
-          <Route path="/medical-records" element={<MedicalRecords />} />
-          <Route path="/bills" element={<BillsList />} />
-          <Route path="/review-doctors" element={<DoctorReviews />} />
-        </Routes>
       </main>
     </div>
   );
 };
 
-const HomeOverview = () => {
-  const [appointments, setAppointments] = useState([]);
+/* Mock Data for Charts */
+const testReportsData = [
+  { name: '1 Mar', value: 30 },
+  { name: '8 Mar', value: 80 },
+  { name: '15 Mar', value: 45 },
+  { name: '22 Mar', value: 120 },
+  { name: '29 Mar', value: 90 },
+];
 
-  useEffect(() => {
-    loadRecentAppointments();
-  }, []);
+const patientStats = [
+  { name: 'New', value: 74, fill: '#f97316' },
+  { name: 'Reported', value: 154, fill: '#1e293b' },
+  { name: 'Released', value: 96, fill: '#0f766e' },
+];
 
-  const loadRecentAppointments = async () => {
-    try {
-      const response = await patientService.getMyAppointments();
-      setAppointments(response.data.data.appointments.slice(0, 3));
-    } catch (error) {
-      console.error("Failed to load appointments:", error);
-    }
-  };
+const geneticData = [
+   { name: 'Mon', val: 40 }, { name: 'Tue', val: 70 }, { name: 'Wed', val: 90 },
+   { name: 'Thu', val: 50 }, { name: 'Fri', val: 80 }, { name: 'Sat', val: 100 }, { name: 'Sun', val: 60 }
+];
 
+const totalReportsPie = [
+  { name: 'Generated', value: 60, fill: '#f97316' },
+  { name: 'Pending', value: 40, fill: '#1e293b' },
+];
+
+const HomeOverview = ({ user }) => {
   return (
-    <div>
-      <h1>Patient Dashboard</h1>
-      <div className="welcome-card">
-        <h2>Welcome to MediFlow HMS</h2>
-        <p>
-          Manage your appointments, view medical records, and track your bills
-          all in one place.
-        </p>
-        <Link to="/patient/book-appointment">
-          <button className="btn-primary">Book New Appointment</button>
-        </Link>
-      </div>
-
-      <div className="section-card">
-        <h2>Recent Appointments</h2>
-        {appointments.length === 0 ? (
-          <p>No appointments yet.</p>
-        ) : (
-          <div className="appointments-list">
-            {appointments.map((apt) => (
-              <div key={apt._id} className="appointment-item">
-                <div>
-                  <strong>Dr. {apt.doctorId?.userId?.name}</strong>
-                  <p>{apt.doctorId?.specialization}</p>
-                  <p>
-                    {new Date(apt.appointmentDate).toLocaleDateString()} at{" "}
-                    {apt.timeSlot.startTime}
-                  </p>
-                </div>
-                <span className={`badge ${apt.status}`}>{apt.status}</span>
-              </div>
-            ))}
+    <div className="p-overview-wrapper">
+       <h2 className="p-overview-title">Dashboard Overview</h2>
+       
+       <div className="p-grid-layout">
+          {/* Test Reports Area Chart */}
+          <div className="p-chart-card col-2">
+             <div className="p-chart-header">
+                <h3>Test Reports</h3>
+                <button className="chart-btn">Show: This month</button>
+             </div>
+             <div className="chart-content-wrapper">
+                <ResponsiveContainer width="100%" height="100%">
+                   <AreaChart data={testReportsData}>
+                      <defs>
+                         <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#0f766e" stopOpacity={0.1}/>
+                            <stop offset="95%" stopColor="#0f766e" stopOpacity={0}/>
+                         </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
+                      <YAxis hide />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="value" stroke="#0f766e" strokeWidth={3} fillOpacity={1} fill="url(#colorVal)" />
+                   </AreaChart>
+                </ResponsiveContainer>
+             </div>
           </div>
-        )}
-      </div>
+
+          {/* Patient Status Radial Chart */}
+          <div className="p-chart-card">
+              <div className="p-chart-header">
+                <h3>Patient Status</h3>
+             </div>
+             <div className="chart-content-wrapper">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="100%" barSize={10} data={patientStats}>
+                       <RadialBar minAngle={15} label={{ position: 'insideStart', fill: '#fff' }} background clockWise dataKey="value" />
+                       <Legend iconSize={10} layout="vertical" verticalAlign="middle" align="right" />
+                    </RadialBarChart>
+                 </ResponsiveContainer>
+             </div>
+          </div>
+
+          {/* Genetic Conditions Bar Chart */}
+          <div className="p-chart-card">
+              <div className="p-chart-header">
+                <h3>Genetics Analytics</h3>
+             </div>
+             <div className="chart-content-wrapper">
+                <ResponsiveContainer width="100%" height="100%">
+                   <BarChart data={geneticData}>
+                      <Bar dataKey="val" fill="#0f766e" radius={[5, 5, 0, 0]} />
+                      <Tooltip cursor={{fill: 'transparent'}} />
+                   </BarChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+
+          {/* Total Reports Pie Chart */}
+          <div className="p-chart-card">
+              <div className="p-chart-header">
+                <h3>Total Reports</h3>
+             </div>
+             <div className="chart-content-wrapper">
+                <ResponsiveContainer width="100%" height="100%">
+                   <PieChart>
+                      <Pie data={totalReportsPie} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                        {totalReportsPie.map((entry, index) => (
+                           <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                   </PieChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+
+          {/* Right Sidebar Elements */}
+          <div className="p-sidebar-right">
+             <div className="p-info-card">
+                <h3>Patient Info</h3>
+                <div className="p-info-avatar">
+                   <img src={`https://ui-avatars.com/api/?name=${user?.name || "User"}&background=f1f5f9&color=0f766e&size=128`} alt="user" />
+                </div>
+                <div className="p-info-name">{user?.name}</div>
+                <div className="p-info-details">
+                   <div className="p-detail-item"><span>Age</span><strong>23 Years</strong></div>
+                   <div className="p-detail-item"><span>Gender</span><strong>Male</strong></div>
+                   <div className="p-detail-item"><span>Email</span><strong>{user?.email}</strong></div>
+                </div>
+             </div>
+
+             <div className="p-links-card">
+                <h3>Quick Links</h3>
+                <div className="p-link-item">
+                   <div className="p-link-icon-box" style={{color: '#f97316'}}><FiFileText /></div>
+                   <span className="p-link-name">Medical Reports</span>
+                </div>
+                <div className="p-link-item">
+                   <div className="p-link-icon-box" style={{color: '#3b82f6'}}><FiActivity /></div>
+                   <span className="p-link-name">Activity Logs</span>
+                </div>
+             </div>
+          </div>
+       </div>
+
+       {/* Progress Tracker Section */}
+       <div className="p-progress-section">
+          <h3>Your Reports (Pre-Processing)</h3>
+          <div className="p-stepper">
+             <div className="p-step active">
+                <span className="step-num">1</span>
+                <span className="step-name">Order a kit</span>
+             </div>
+             <div className="p-step">
+                <span className="step-num">2</span>
+                <span className="step-name">Kit Shipment</span>
+             </div>
+             <div className="p-step">
+                <span className="step-num">3</span>
+                <span className="step-name">Sample Collection</span>
+             </div>
+             <div className="p-step">
+                <span className="step-num">4</span>
+                <span className="step-name">Process Sample</span>
+             </div>
+             <div className="p-step final">
+                <span className="step-num">5</span>
+                <span className="step-name">Generate Report</span>
+             </div>
+          </div>
+       </div>
     </div>
   );
 };
+
+const ProfileOverview = ({ user }) => (
+    <div className="section-card">
+        <h2>Your Profile</h2>
+        <div className="profile-details" style={{ marginTop: '20px' }}>
+            <div className="profile-field" style={{ display: 'flex', gap: '20px', padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
+                <label style={{ fontWeight: 700, width: '150px' }}>Full Name</label>
+                <p>{user?.name}</p>
+            </div>
+            <div className="profile-field" style={{ display: 'flex', gap: '20px', padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
+                <label style={{ fontWeight: 700, width: '150px' }}>Email Address</label>
+                <p>{user?.email}</p>
+            </div>
+            <div className="profile-field" style={{ display: 'flex', gap: '20px', padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
+                <label style={{ fontWeight: 700, width: '150px' }}>Account Status</label>
+                <p>Active</p>
+            </div>
+        </div>
+    </div>
+);
 
 const BookAppointment = () => {
   const [doctors, setDoctors] = useState([]);
@@ -143,111 +311,61 @@ const BookAppointment = () => {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadDoctors();
-  }, []);
+  useEffect(() => { loadDoctors(); }, []);
 
   const loadDoctors = async () => {
     try {
       const response = await patientService.getDoctors();
       const doctorsList = response.data.data.doctors;
       setDoctors(doctorsList);
-
-      // Load ratings for each doctor
       const ratings = {};
-      await Promise.all(
-        doctorsList.map(async (doctor) => {
+      await Promise.all(doctorsList.map(async (doctor) => {
           try {
-            const ratingRes = await reviewService.getDoctorRatingStats(
-              doctor._id,
-            );
+            const ratingRes = await reviewService.getDoctorRatingStats(doctor._id);
             ratings[doctor._id] = ratingRes.data;
-          } catch (err) {
-            ratings[doctor._id] = { averageRating: 0, totalReviews: 0 };
-          }
-        }),
-      );
+          } catch (err) { ratings[doctor._id] = { averageRating: 0, totalReviews: 0 }; }
+      }));
       setDoctorRatings(ratings);
-    } catch (error) {
-      console.error("Failed to load doctors:", error);
-    }
+    } catch (error) { console.error("Failed to load doctors:", error); }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-    setLoading(true);
-
+    setError(""); setSuccess(""); setLoading(true);
     try {
       await patientService.bookAppointment({
         doctorId: selectedDoctor,
         appointmentDate: formData.appointmentDate,
-        timeSlot: {
-          startTime: formData.startTime,
-          endTime: formData.endTime,
-        },
-        reason: formData.reason,
-        priority: formData.priority,
+        timeSlot: { startTime: formData.startTime, endTime: formData.endTime },
+        reason: formData.reason, priority: formData.priority,
       });
       setSuccess("Appointment booked successfully!");
-      setFormData({
-        appointmentDate: "",
-        startTime: "",
-        endTime: "",
-        reason: "",
-        priority: "normal",
-      });
+      setFormData({ appointmentDate: "", startTime: "", endTime: "", reason: "", priority: "normal" });
       setSelectedDoctor("");
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to book appointment");
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError(err.response?.data?.message || "Failed to book appointment"); } finally { setLoading(false); }
   };
 
   return (
-    <div>
-      <h1>Book Appointment</h1>
-
+    <div className="section-card">
+      <h2>Book Appointment</h2>
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
-
-      <div className="section-card">
-        <h3>Select a Doctor</h3>
-        <div className="doctors-grid">
+      
+      <div className="form-group">
+        <label>Select a Doctor</label>
+        <div className="doctors-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px', marginTop: '10px' }}>
           {doctors.map((doctor) => {
-            const rating = doctorRatings[doctor._id] || {
-              averageRating: 0,
-              totalReviews: 0,
-            };
+            const rating = doctorRatings[doctor._id] || { averageRating: 0, totalReviews: 0 };
             return (
               <div
                 key={doctor._id}
                 className={`doctor-card ${selectedDoctor === doctor._id ? "selected" : ""}`}
                 onClick={() => setSelectedDoctor(doctor._id)}
+                style={{ padding: '15px', border: selectedDoctor === doctor._id ? '2px solid #0f766e' : '1px solid #e2e8f0', borderRadius: '12px', cursor: 'pointer', background: selectedDoctor === doctor._id ? '#e0f2f1' : 'white' }}
               >
-                <div className="doctor-card-header">
-                  <h4>Dr. {doctor.userId?.name}</h4>
-                  <span className="doctor-specialization">
-                    {doctor.specialization}
-                  </span>
-                </div>
-                <div className="doctor-rating">
-                  <StarRating
-                    rating={rating.averageRating}
-                    readonly
-                    size={16}
-                  />
-                  <span className="review-count-small">
-                    ({rating.totalReviews}{" "}
-                    {rating.totalReviews === 1 ? "review" : "reviews"})
-                  </span>
-                </div>
-                <div className="doctor-fee">
-                  <strong>Consultation Fee:</strong> Rs.{" "}
-                  {doctor.consultationFee}
-                </div>
+                <strong>Dr. {doctor.userId?.name}</strong>
+                <p style={{fontSize: '0.8rem', color: '#64748b'}}>{doctor.specialization}</p>
+                <StarRating rating={rating.averageRating} readonly size={14} />
               </div>
             );
           })}
@@ -255,582 +373,160 @@ const BookAppointment = () => {
       </div>
 
       {selectedDoctor && (
-        <div className="form-card">
-          <h3>Appointment Details</h3>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Appointment Date</label>
-              <input
-                type="date"
-                value={formData.appointmentDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, appointmentDate: e.target.value })
-                }
-                min={new Date().toISOString().split("T")[0]}
-                required
-              />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
+        <form onSubmit={handleSubmit} style={{ marginTop: '30px' }}>
+          <div className="form-group">
+            <label>Date</label>
+            <input type="date" value={formData.appointmentDate} onChange={(e) => setFormData({...formData, appointmentDate: e.target.value})} required style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', width: '100%' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '15px' }}>
+             <div style={{flex: 1}}>
                 <label>Start Time</label>
-                <input
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startTime: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="form-group">
+                <input type="time" value={formData.startTime} onChange={(e) => setFormData({...formData, startTime: e.target.value})} required style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', width: '100%' }} />
+             </div>
+             <div style={{flex: 1}}>
                 <label>End Time</label>
-                <input
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) =>
-                    setFormData({ ...formData, endTime: e.target.value })
-                  }
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Priority</label>
-              <select
-                value={formData.priority}
-                onChange={(e) =>
-                  setFormData({ ...formData, priority: e.target.value })
-                }
-              >
-                <option value="normal">Normal</option>
-                <option value="urgent">Urgent</option>
-                <option value="emergency">Emergency</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Reason for Visit</label>
-              <textarea
-                value={formData.reason}
-                onChange={(e) =>
-                  setFormData({ ...formData, reason: e.target.value })
-                }
-                rows="4"
-                required
-                placeholder="Describe your symptoms or reason for consultation"
-              />
-            </div>
-
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? "Booking..." : "Book Appointment"}
-            </button>
-          </form>
-        </div>
+                <input type="time" value={formData.endTime} onChange={(e) => setFormData({...formData, endTime: e.target.value})} required style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', width: '100%' }} />
+             </div>
+          </div>
+          <div className="form-group">
+            <label>Reason</label>
+            <textarea value={formData.reason} onChange={(e) => setFormData({...formData, reason: e.target.value})} required rows="3" style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', width: '100%' }} />
+          </div>
+          <button type="submit" className="signin-btn" style={{ background: '#0f766e', color: 'white' }}>{loading ? "Booking..." : "Book Appointment"}</button>
+        </form>
       )}
     </div>
   );
 };
 
 const AppointmentsList = () => {
-  const [appointments, setAppointments] = useState([]);
-
-  useEffect(() => {
-    loadAppointments();
-  }, []);
-
-  const loadAppointments = async () => {
-    try {
-      const response = await patientService.getMyAppointments();
-      setAppointments(response.data.data.appointments);
-    } catch (error) {
-      console.error("Failed to load appointments:", error);
-    }
-  };
-
-  const handleCancel = async (id) => {
-    const reason = prompt("Please provide a reason for cancellation:");
-    if (!reason) return;
-
-    try {
-      await patientService.cancelAppointment(id, reason);
-      loadAppointments();
-    } catch (error) {
-      console.error("Failed to cancel appointment:", error);
-      alert("Failed to cancel appointment");
-    }
-  };
-
-  return (
-    <div>
-      <h1>My Appointments</h1>
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Doctor</th>
-              <th>Specialization</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {appointments.map((apt) => (
-              <tr key={apt._id}>
-                <td>Dr. {apt.doctorId?.userId?.name}</td>
-                <td>{apt.doctorId?.specialization}</td>
-                <td>{new Date(apt.appointmentDate).toLocaleDateString()}</td>
-                <td>
-                  {apt.timeSlot.startTime} - {apt.timeSlot.endTime}
-                </td>
-                <td>
-                  <span className={`badge ${apt.status}`}>{apt.status}</span>
-                </td>
-                <td>
-                  {apt.status === "scheduled" && (
-                    <button
-                      onClick={() => handleCancel(apt._id)}
-                      className="btn-danger-small"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+    const [appointments, setAppointments] = useState([]);
+    useEffect(() => { loadAppointments(); }, []);
+    const loadAppointments = async () => {
+        try {
+            const response = await patientService.getMyAppointments();
+            setAppointments(response.data.data.appointments);
+        } catch (error) { console.error(error); }
+    };
+    return (
+        <div className="section-card">
+            <h2>My Appointments</h2>
+            <div style={{ marginTop: '20px', overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ textAlign: 'left', borderBottom: '2px solid #f1f5f9' }}>
+                            <th style={{ padding: '12px' }}>Doctor</th>
+                            <th style={{ padding: '12px' }}>Date</th>
+                            <th style={{ padding: '12px' }}>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {appointments.map(apt => (
+                            <tr key={apt._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '12px' }}>Dr. {apt.doctorId?.userId?.name}</td>
+                                <td style={{ padding: '12px' }}>{new Date(apt.appointmentDate).toLocaleDateString()}</td>
+                                <td style={{ padding: '12px' }}>
+                                    <span style={{ padding: '4px 8px', borderRadius: '20px', fontSize: '0.75rem', background: apt.status === 'scheduled' ? '#e0f2fe' : '#fef2f2', color: apt.status === 'scheduled' ? '#0369a1' : '#b91c1c' }}>
+                                        {apt.status}
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
 };
 
 const MedicalRecords = () => {
-  const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    loadRecords();
-  }, []);
-
-  const loadRecords = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const response = await patientService.getMyMedicalRecords();
-      setRecords(response.data?.data?.records || []);
-    } catch (error) {
-      console.error("Failed to load records:", error);
-      setError(
-        error.response?.data?.message || "Failed to load medical records",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div>
-      <h1>My Medical Records</h1>
-      {loading ? (
-        <p>Loading medical records...</p>
-      ) : error ? (
-        <div className="error-message">{error}</div>
-      ) : records.length === 0 ? (
-        <p>
-          No medical records yet. Records appear after a doctor creates a
-          prescription or medical note for your account.
-        </p>
-      ) : (
-        <div className="records-list">
-          {records.map((record) => (
-            <div key={record._id} className="record-card">
-              <div className="record-header">
-                <h3>{new Date(record.createdAt).toLocaleDateString()}</h3>
-                <p>
-                  Dr. {record.doctorId?.userId?.name} -{" "}
-                  {record.doctorId?.specialization}
-                </p>
-              </div>
-              <div className="record-body">
-                <p>
-                  <strong>Diagnosis:</strong> {record.diagnosis}
-                </p>
-                {record.symptoms?.length > 0 && (
-                  <p>
-                    <strong>Symptoms:</strong> {record.symptoms.join(", ")}
-                  </p>
-                )}
-                {record.prescription?.length > 0 && (
-                  <div>
-                    <strong>Prescription:</strong>
-                    <ul>
-                      {record.prescription.map((med, idx) => (
-                        <li key={idx}>
-                          {med.medicineName} - {med.dosage}, {med.frequency} for{" "}
-                          {med.duration}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {record.notes && (
-                  <p>
-                    <strong>Notes:</strong> {record.notes}
-                  </p>
-                )}
-              </div>
+    const [records, setRecords] = useState([]);
+    useEffect(() => { loadRecords(); }, []);
+    const loadRecords = async () => {
+        try {
+            const response = await patientService.getMyMedicalRecords();
+            setRecords(response.data?.data?.records || []);
+        } catch (error) { console.error(error); }
+    };
+    return (
+        <div className="section-card">
+            <h2>Medical Records</h2>
+            <div style={{ marginTop: '20px' }}>
+                {records.length === 0 ? <p>No records found.</p> : records.map(record => (
+                    <div key={record._id} style={{ padding: '20px', border: '1px solid #f1f5f9', borderRadius: '12px', marginBottom: '15px' }}>
+                        <strong>{new Date(record.createdAt).toLocaleDateString()}</strong>
+                        <p>Diagnosis: {record.diagnosis}</p>
+                    </div>
+                ))}
             </div>
-          ))}
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 const BillsList = () => {
-  const [bills, setBills] = useState([]);
-
-  useEffect(() => {
-    loadBills();
-  }, []);
-
-  const loadBills = async () => {
-    try {
-      const response = await billingService.getMyBills();
-      setBills(response.data.data.bills);
-    } catch (error) {
-      console.error("Failed to load bills:", error);
-    }
-  };
-
-  return (
-    <div>
-      <h1>My Bills</h1>
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Invoice No</th>
-              <th>Date</th>
-              <th>Amount</th>
-              <th>Paid</th>
-              <th>Due</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bills.map((bill) => (
-              <tr key={bill._id}>
-                <td>{bill.invoiceNumber}</td>
-                <td>{new Date(bill.createdAt).toLocaleDateString()}</td>
-                <td>Rs. {bill.totalAmount}</td>
-                <td>Rs. {bill.paidAmount}</td>
-                <td>Rs. {bill.dueAmount}</td>
-                <td>
-                  <span className={`badge ${bill.paymentStatus}`}>
-                    {bill.paymentStatus}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+    const [bills, setBills] = useState([]);
+    useEffect(() => { loadBills(); }, []);
+    const loadBills = async () => {
+        try {
+            const response = await billingService.getMyBills();
+            setBills(response.data.data.bills);
+        } catch (error) { console.error(error); }
+    };
+    return (
+        <div className="section-card">
+            <h2>My Bills</h2>
+            <div style={{ marginTop: '20px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ textAlign: 'left', borderBottom: '2px solid #f1f5f9' }}>
+                            <th style={{ padding: '12px' }}>Invoice</th>
+                            <th style={{ padding: '12px' }}>Amount</th>
+                            <th style={{ padding: '12px' }}>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {bills.map(bill => (
+                            <tr key={bill._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '12px' }}>{bill.invoiceNumber}</td>
+                                <td style={{ padding: '12px' }}>Rs. {bill.totalAmount}</td>
+                                <td style={{ padding: '12px' }}>
+                                    <span style={{ padding: '4px 8px', borderRadius: '20px', fontSize: '0.75rem', background: bill.paymentStatus === 'paid' ? '#dcfce7' : '#fef2f2', color: bill.paymentStatus === 'paid' ? '#15803d' : '#b91c1c' }}>
+                                        {bill.paymentStatus}
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
 };
 
 const DoctorReviews = () => {
-  const [doctors, setDoctors] = useState([]);
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [ratingStats, setRatingStats] = useState(null);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewForm, setReviewForm] = useState({
-    rating: 0,
-    comment: "",
-  });
-  const [hasReviewed, setHasReviewed] = useState(false);
-  const [existingReview, setExistingReview] = useState(null);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    loadDoctors();
-  }, []);
-
-  useEffect(() => {
-    if (selectedDoctor) {
-      loadDoctorReviews(selectedDoctor);
-      loadRatingStats(selectedDoctor);
-      checkIfReviewed(selectedDoctor);
-    }
-  }, [selectedDoctor]);
-
-  const loadDoctors = async () => {
-    try {
-      const response = await patientService.getDoctors();
-      setDoctors(response.data.data.doctors);
-    } catch (error) {
-      console.error("Failed to load doctors:", error);
-    }
-  };
-
-  const loadDoctorReviews = async (doctorId) => {
-    try {
-      const response = await reviewService.getDoctorReviews(doctorId);
-      setReviews(response.data);
-    } catch (error) {
-      console.error("Failed to load reviews:", error);
-    }
-  };
-
-  const loadRatingStats = async (doctorId) => {
-    try {
-      const response = await reviewService.getDoctorRatingStats(doctorId);
-      setRatingStats(response.data);
-    } catch (error) {
-      console.error("Failed to load rating stats:", error);
-    }
-  };
-
-  const checkIfReviewed = async (doctorId) => {
-    try {
-      const response = await reviewService.checkPatientReview(doctorId);
-      setHasReviewed(response.data.hasReviewed);
-      setExistingReview(response.data.review);
-      if (response.data.review) {
-        setReviewForm({
-          rating: response.data.review.rating,
-          comment: response.data.review.comment,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to check review:", error);
-    }
-  };
-
-  const handleSubmitReview = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setLoading(true);
-
-    if (reviewForm.rating === 0) {
-      setError("Please select a rating");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      if (hasReviewed && existingReview) {
-        await reviewService.updateReview(existingReview._id, reviewForm);
-        setSuccess("Review updated successfully!");
-      } else {
-        await reviewService.createReview({
-          doctorId: selectedDoctor,
-          ...reviewForm,
-        });
-        setSuccess("Review submitted successfully!");
-      }
-      setShowReviewForm(false);
-      loadDoctorReviews(selectedDoctor);
-      loadRatingStats(selectedDoctor);
-      checkIfReviewed(selectedDoctor);
-    } catch (error) {
-      setError(error.response?.data?.message || "Failed to submit review");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteReview = async () => {
-    if (!window.confirm("Are you sure you want to delete your review?")) return;
-
-    try {
-      await reviewService.deleteReview(existingReview._id);
-      setSuccess("Review deleted successfully!");
-      setHasReviewed(false);
-      setExistingReview(null);
-      setReviewForm({ rating: 0, comment: "" });
-      loadDoctorReviews(selectedDoctor);
-      loadRatingStats(selectedDoctor);
-    } catch (error) {
-      setError("Failed to delete review");
-    }
-  };
-
-  return (
-    <div>
-      <h1>Review Doctors</h1>
-
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
-
-      <div className="form-card">
-        <div className="form-group">
-          <label>Select Doctor</label>
-          <select
-            value={selectedDoctor || ""}
-            onChange={(e) => setSelectedDoctor(e.target.value)}
-          >
-            <option value="">Choose a doctor</option>
-            {doctors.map((doctor) => (
-              <option key={doctor._id} value={doctor._id}>
-                Dr. {doctor.userId?.name} - {doctor.specialization}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {selectedDoctor && ratingStats && (
+    const [doctors, setDoctors] = useState([]);
+    useEffect(() => { loadDoctors(); }, []);
+    const loadDoctors = async () => {
+        try {
+            const response = await patientService.getDoctors();
+            setDoctors(response.data.data.doctors);
+        } catch (error) { console.error(error); }
+    };
+    return (
         <div className="section-card">
-          <h2>Doctor Rating Overview</h2>
-          <div className="rating-overview">
-            <div className="rating-summary">
-              <div className="average-rating-large">
-                {ratingStats.averageRating.toFixed(1)}
-              </div>
-              <StarRating
-                rating={ratingStats.averageRating}
-                readonly
-                size={24}
-              />
-              <p className="rating-count">
-                Based on {ratingStats.totalReviews} review
-                {ratingStats.totalReviews !== 1 ? "s" : ""}
-              </p>
+            <h2>Review Doctors</h2>
+            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Choose a doctor you've visited to share your experience.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px', marginTop: '20px' }}>
+                {doctors.map(doc => (
+                    <div key={doc._id} style={{ padding: '15px', border: '1px solid #f1f5f9', borderRadius: '12px', textAlign: 'center' }}>
+                         <img src={`https://ui-avatars.com/api/?name=${doc.userId?.name}&background=random`} style={{ width: '60px', borderRadius: '50%', marginBottom: '10px' }} alt="" />
+                         <strong>Dr. {doc.userId?.name}</strong>
+                         <p style={{fontSize: '0.8rem', color: '#64748b'}}>{doc.specialization}</p>
+                    </div>
+                ))}
             </div>
-            <div className="rating-distribution">
-              {[5, 4, 3, 2, 1].map((star) => (
-                <div key={star} className="rating-bar-row">
-                  <span className="star-label">{star} ★</span>
-                  <div className="rating-bar-track">
-                    <div
-                      className="rating-bar-fill"
-                      style={{
-                        width: `${ratingStats.totalReviews > 0 ? (ratingStats.ratingDistribution[star] / ratingStats.totalReviews) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                  <span className="rating-bar-count">
-                    {ratingStats.ratingDistribution[star]}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {!showReviewForm && (
-            <div style={{ marginTop: "1.5rem" }}>
-              {hasReviewed ? (
-                <div>
-                  <button
-                    onClick={() => setShowReviewForm(true)}
-                    className="btn-primary"
-                    style={{ marginRight: "0.5rem" }}
-                  >
-                    Edit Your Review
-                  </button>
-                  <button
-                    onClick={handleDeleteReview}
-                    className="btn-danger-small"
-                  >
-                    Delete Review
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowReviewForm(true)}
-                  className="btn-primary"
-                >
-                  Write a Review
-                </button>
-              )}
-            </div>
-          )}
-
-          {showReviewForm && (
-            <form onSubmit={handleSubmitReview} className="review-form">
-              <h3>{hasReviewed ? "Edit Your Review" : "Write a Review"}</h3>
-              <div className="form-group">
-                <label>Rating</label>
-                <StarRating
-                  rating={reviewForm.rating}
-                  onRatingChange={(rating) =>
-                    setReviewForm({ ...reviewForm, rating })
-                  }
-                  size={32}
-                />
-              </div>
-              <div className="form-group">
-                <label>Comment</label>
-                <textarea
-                  value={reviewForm.comment}
-                  onChange={(e) =>
-                    setReviewForm({ ...reviewForm, comment: e.target.value })
-                  }
-                  rows="4"
-                  required
-                  maxLength="500"
-                  placeholder="Share your experience with this doctor..."
-                />
-              </div>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  disabled={loading}
-                >
-                  {loading
-                    ? "Submitting..."
-                    : hasReviewed
-                      ? "Update Review"
-                      : "Submit Review"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowReviewForm(false)}
-                  className="btn-small"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
         </div>
-      )}
-
-      {selectedDoctor && reviews.length > 0 && (
-        <div className="section-card">
-          <h2>Patient Reviews</h2>
-          <div className="reviews-list">
-            {reviews.map((review) => (
-              <div key={review._id} className="review-item">
-                <div className="review-header">
-                  <div>
-                    <strong>{review.patientId?.name || "Anonymous"}</strong>
-                    <StarRating rating={review.rating} readonly size={16} />
-                  </div>
-                  <span className="review-date">
-                    {new Date(review.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="review-comment">{review.comment}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default PatientDashboard;
