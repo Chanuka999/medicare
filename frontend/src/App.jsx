@@ -14,6 +14,8 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import DoctorDashboard from "./pages/doctor/Dashboard";
 import PatientDashboard from "./pages/patient/Dashboard";
 import NotFound from "./pages/NotFound";
+import Home from "./pages/Home";
+import About from "./pages/About";
 
 function App() {
   const [theme, setTheme] = useState(
@@ -80,7 +82,8 @@ function App() {
             }
           />
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
