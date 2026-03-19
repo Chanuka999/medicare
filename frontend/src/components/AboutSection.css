@@ -1,0 +1,160 @@
+/* About Section Styles (Reused from About.css but adapted for sections) */
+.about-section-wrapper {
+  padding: 80px 5%;
+  background: white;
+  border-radius: 40px;
+  margin-top: 150px; /* Space after Home Hero */
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.05);
+}
+
+.about-hero-sec {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 80px 0;
+  gap: 40px;
+}
+
+.about-hero-content h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 30px;
+}
+
+.about-hero-content h1 span {
+  color: #2563eb;
+}
+
+.about-hero-content p {
+  font-size: 1.2rem;
+  color: #64748b;
+  line-height: 1.7;
+  margin-bottom: 40px;
+}
+
+.about-stats-row {
+  display: flex;
+  gap: 40px;
+}
+
+.about-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-num {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+/* 3D Illustration Part */
+.about-hero-image {
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.illustration-wrapper {
+  position: relative;
+  max-width: 450px;
+  animation: floatAniSection 6s ease-in-out infinite;
+}
+
+@keyframes floatAniSection {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.floating-img {
+  width: 100%;
+  border-radius: 30px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1);
+}
+
+.glass-card {
+  position: absolute;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.g-1 { top: -10px; right: -30px; }
+.g-2 { bottom: 30px; left: -40px; }
+
+.g-icon { color: #2563eb; }
+
+/* Bio Section part */
+.about-bio-sec {
+  display: flex;
+  padding: 100px 0;
+  gap: 60px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.bio-image-side { flex: 1; position: relative; }
+.bio-image-container img { width: 100%; border-radius: 30px; }
+.dots-bg { position: absolute; top: -20px; left: -20px; width: 120px; height: 120px; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 15px 15px; }
+
+.chat-bubble-3d {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  background: #0f172a;
+  color: white;
+  padding: 15px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.avatar-group img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #0f172a; margin-right: -8px; }
+
+.bio-content-side { flex: 1; }
+.tagline { display: inline-block; background: #2563eb; color: white; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; margin-bottom: 20px; }
+.bio-content-side h2 { font-size: 3rem; margin-bottom: 20px; color: #0f172a; }
+.bio-content-side p { color: #64748b; line-height: 1.8; margin-bottom: 30px; }
+
+.bio-features { display: flex; gap: 30px; margin-bottom: 40px; }
+.b-feat { display: flex; align-items: center; gap: 10px; font-weight: 700; color: #0f172a; }
+.bf-icon { color: #2563eb; font-size: 1.3rem; }
+
+.primary-btn-about {
+   background: #2563eb;
+   color: white;
+   padding: 16px 36px;
+   border: none;
+   border-radius: 50px;
+   font-size: 1rem;
+   font-weight: 700;
+   display: flex;
+   align-items: center;
+   gap: 12px;
+   cursor: pointer;
+   transition: all 0.3s ease;
+}
+
+.primary-btn-about:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3); }
+
+@media (max-width: 900px) {
+  .about-hero-sec, .about-bio-sec { flex-direction: column; text-align: center; }
+  .about-stats-row { justify-content: center; }
+  .bio-features { flex-direction: column; align-items: center; }
+}
