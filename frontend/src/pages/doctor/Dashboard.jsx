@@ -148,6 +148,23 @@ const docsData = [ { v: 30 }, { v: 50 }, { v: 40 }, { v: 80 }, { v: 60 }, { v: 9
 const ambuData = [ { v: 20 }, { v: 40 }, { v: 30 }, { v: 70 }, { v: 55 }, { v: 85 } ];
 
 const HomeOverview = ({ profile }) => {
+    const [appointments, setAppointments] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchApts = async () => {
+            try {
+                const res = await doctorService.getMyAppointments();
+                setAppointments(res.data.data.appointments || []);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchApts();
+    }, []);
+
     return (
         <div className="d-overview-wrapper">
             {/* Top Stat Cards */}
@@ -166,9 +183,9 @@ const HomeOverview = ({ profile }) => {
                 </div>
                 <div className="d-stat-card">
                     <div className="d-stat-details">
-                        <h4>Doctors</h4>
-                        <p className="d-number">126</p>
-                        <small style={{ color: '#94a3b8' }}>Available doctors</small>
+                        <h4>Patients</h4>
+                        <p className="d-number">{appointments.length}</p>
+                        <small style={{ color: '#94a3b8' }}>Total assigned patients</small>
                     </div>
                     <div style={{ width: '80px', height: '60px' }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -196,53 +213,50 @@ const HomeOverview = ({ profile }) => {
                     <div className="d-card-header">
                         <h3>Patient List</h3>
                         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Sort: A - Z</span>
+                            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Today's Overview</span>
                             <span style={{ fontSize: '0.85rem', color: '#3b82f6', fontWeight: 600, cursor: 'pointer' }}>See All</span>
                         </div>
                     </div>
-                    <table className="d-table">
-                        <thead>
-                            <tr><th>Name</th><th>Ward No.</th><th>Priority</th><th>Start Date</th><th>End Date</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <div className="d-patient-info">
-                                        <img src="https://i.pravatar.cc/40?u=123" className="d-patient-avatar" />
-                                        <div className="d-patient-meta"><span>Adam Messy</span><small>Male, 26 Years</small></div>
-                                    </div>
-                                </td>
-                                <td>#123456</td>
-                                <td><span className="d-badge medium">Medium</span></td>
-                                <td>June 3, 2023</td>
-                                <td style={{ color: '#cbd5e1' }}>— — —</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div className="d-patient-info">
-                                        <img src="https://i.pravatar.cc/40?u=124" className="d-patient-avatar" />
-                                        <div className="d-patient-meta"><span>Celine Aluista</span><small>Female, 22 Years</small></div>
-                                    </div>
-                                </td>
-                                <td>#985746</td>
-                                <td><span className="d-badge low">Low</span></td>
-                                <td>May 31, 2023</td>
-                                <td>June 4, 2023</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div className="d-patient-info">
-                                        <img src="https://i.pravatar.cc/40?u=125" className="d-patient-avatar" />
-                                        <div className="d-patient-meta"><span>Malachi Ardo</span><small>Male, 19 Years</small></div>
-                                    </div>
-                                </td>
-                                <td>#047638</td>
-                                <td><span className="d-badge high">High</span></td>
-                                <td>June 7, 2023</td>
-                                <td style={{ color: '#cbd5e1' }}>— — —</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="d-table">
+                            <thead>
+                                <tr><th>Name</th><th>Ward No.</th><th>Priority</th><th>Date</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {loading ? (
+                                    <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>Loading patients...</td></tr>
+                                ) : appointments.length > 0 ? (
+                                    appointments.map((apt) => (
+                                        <tr key={apt._id}>
+                                            <td>
+                                                <div className="d-patient-info">
+                                                    <img src={`https://ui-avatars.com/api/?name=${apt.patientId?.name || "Patient"}&background=random`} className="d-patient-avatar" alt="avatar" />
+                                                    <div className="d-patient-meta">
+                                                        <span>{apt.patientId?.name}</span>
+                                                        <small>{apt.patientId?.email}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>#{apt._id.slice(-6).toUpperCase()}</td>
+                                            <td>
+                                                <span className={`d-badge ${apt.priority === 'high' ? 'high' : apt.priority === 'low' ? 'low' : 'medium'}`}>
+                                                    {apt.priority || 'Medium'}
+                                                </span>
+                                            </td>
+                                            <td>{new Date(apt.appointmentDate).toLocaleDateString()}</td>
+                                            <td>
+                                                <span className={`d-badge ${apt.status === 'scheduled' ? 'medium' : apt.status === 'completed' ? 'low' : 'high'}`}>
+                                                    {apt.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>No patients assigned yet.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 {/* Calendar Placeholder */}
